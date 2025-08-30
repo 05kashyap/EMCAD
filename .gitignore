@@ -1,0 +1,5 @@
+__pycache__/
+data/
+pretrained_pth/
+.env
+model_pth/

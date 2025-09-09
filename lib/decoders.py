@@ -6,6 +6,7 @@ import math
 from timm.models.layers import trunc_normal_tf_
 from timm.models.helpers import named_apply
 
+from convkan import ConvKAN, LayerNorm2D
 
 def gcd(a, b):
     while b:
@@ -191,20 +192,31 @@ def MSCBLayer(in_channels, out_channels, n=1, stride=1, kernel_sizes=[1,3,5], ex
 
 #   Efficient up-convolution block (EUCB)
 class EUCB(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, activation='relu'):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, activation='relu', useKAN=True):
         super(EUCB,self).__init__()
 
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.up_dwc = nn.Sequential(
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(self.in_channels, self.in_channels, kernel_size=kernel_size, stride=stride, padding=kernel_size//2, groups=self.in_channels, bias=False),
-	        nn.BatchNorm2d(self.in_channels),
-            act_layer(activation, inplace=True)
-        )
-        self.pwc = nn.Sequential(
-            nn.Conv2d(self.in_channels, self.out_channels, kernel_size=1, stride=1, padding=0, bias=True)
-        ) 
+        if useKAN:
+            self.up_dwc = nn.Sequential(
+                nn.Upsample(scale_factor=2),
+                ConvKAN(self.in_channels, self.in_channels, kernel_size=kernel_size, stride=stride, padding=kernel_size//2, groups=self.in_channels, bias=False),
+                nn.BatchNorm2d(self.in_channels),
+                act_layer(activation, inplace=True)
+            )
+            self.pwc = nn.Sequential(
+                ConvKAN(self.in_channels, self.out_channels, kernel_size=1, stride=1, padding=0, bias=True)
+            ) 
+        else:
+            self.up_dwc = nn.Sequential(
+                nn.Upsample(scale_factor=2),
+                nn.Conv2d(self.in_channels, self.in_channels, kernel_size=kernel_size, stride=stride, padding=kernel_size//2, groups=self.in_channels, bias=False),
+                nn.BatchNorm2d(self.in_channels),
+                act_layer(activation, inplace=True)
+            )
+            self.pwc = nn.Sequential(
+                nn.Conv2d(self.in_channels, self.out_channels, kernel_size=1, stride=1, padding=0, bias=True)
+            )
         self.init_weights('normal')
     
     def init_weights(self, scheme=''):

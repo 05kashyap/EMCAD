@@ -192,7 +192,7 @@ def MSCBLayer(in_channels, out_channels, n=1, stride=1, kernel_sizes=[1,3,5], ex
 
 #   Efficient up-convolution block (EUCB)
 class EUCB(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, activation='relu', useKAN=True):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, activation='relu', useKAN=False):
         super(EUCB,self).__init__()
 
         self.in_channels = in_channels
